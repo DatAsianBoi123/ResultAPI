@@ -46,12 +46,12 @@ public class Result<V, E extends Exception> {
         return caughtError;
     }
 
-    public V unwrap() throws UnwrapException {
-        if (error == null) return value;
+    public V unwrap() {
+        if (isOk()) return value;
         throw new UnwrapException("unwrap", "err");
     }
 
-    public E unwrapError() throws UnwrapException {
+    public E unwrapError() {
         if (isError()) return error;
         throw new UnwrapException("unwrapError", "ok");
     }
