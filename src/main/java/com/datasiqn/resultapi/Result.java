@@ -12,20 +12,15 @@ import java.util.function.Function;
  * @param <V> The type of the {@code Ok} value
  * @param <E> The type of the {@code Error} value
  */
-public class Result<V, E extends Exception> {
+public class Result<V, E> {
     private final V value;
     private final E error;
     private final boolean caughtError;
 
-    private Result(V value) {
+    private Result(V value, E error) {
         this.value = value;
-        this.error = null;
-        caughtError = false;
-    }
-    private Result(E error) {
-        this.value = null;
         this.error = error;
-        caughtError = true;
+        caughtError = error != null;
     }
 
     public void match(Consumer<V> okConsumer, Consumer<E> errorConsumer) {
@@ -96,26 +91,26 @@ public class Result<V, E extends Exception> {
         return matchResult(Result::ok, error -> error(mapper.apply(error)));
     }
 
-    public static <E extends Exception> @NotNull Result<None, E> ok() {
+    public static <E> @NotNull Result<None, E> ok() {
         return ok(None.NONE);
     }
     @Contract(value = "_ -> new", pure = true)
-    public static <V, E extends Exception> @NotNull Result<V, E> ok(V value) {
-        return new Result<>(value);
+    public static <V, E> @NotNull Result<V, E> ok(V value) {
+        return new Result<>(value, null);
     }
 
     @Contract(value = "_ -> new", pure = true)
-    public static <V, E extends Exception> @NotNull Result<V, E> error(E error) {
-        return new Result<>(error);
+    public static <V, E> @NotNull Result<V, E> error(E error) {
+        return new Result<>(null, error);
     }
 
-    public static <V, E extends Exception> @NotNull Result<V, E> ofNullable(@Nullable V value, E error) {
+    public static <V, E> @NotNull Result<V, E> ofNullable(@Nullable V value, E error) {
         if (value == null) return error(error);
         return ok(value);
     }
 
     @Contract(value = "_, _ -> new", pure = true)
-    public static <V, F extends Exception, E extends Exception> Result<V, E> resolve(ValueSupplier<V, F> supplier, Function<Exception, E> errorMapper) {
+    public static <V, E> Result<V, E> resolve(ValueSupplier<V> supplier, Function<Exception, E> errorMapper) {
         try {
             return ok(supplier.getValue());
         } catch (Exception e) {
@@ -124,7 +119,7 @@ public class Result<V, E extends Exception> {
     }
 
     @FunctionalInterface
-    public interface ValueSupplier<T, E extends Exception> {
-        T getValue() throws E;
+    public interface ValueSupplier<T> {
+        T getValue() throws Exception;
     }
 }
