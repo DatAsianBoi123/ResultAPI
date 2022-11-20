@@ -96,6 +96,9 @@ public class Result<V, E extends Exception> {
         return matchResult(Result::ok, error -> error(mapper.apply(error)));
     }
 
+    public static <E extends Exception> @NotNull Result<None, E> ok() {
+        return ok(None.NONE);
+    }
     @Contract(value = "_ -> new", pure = true)
     public static <V, E extends Exception> @NotNull Result<V, E> ok(V value) {
         return new Result<>(value);
