@@ -67,11 +67,11 @@ public class Result<V, E> {
         return matchResult(function, Result::error);
     }
 
-    public <N extends Exception> Result<V, N> or(Result<V, N> result) {
+    public <N> Result<V, N> or(Result<V, N> result) {
         return matchResult(Result::ok, error -> result);
     }
 
-    public <N extends Exception> Result<V, N> orElse(Function<E, Result<V, N>> function) {
+    public <N> Result<V, N> orElse(Function<E, Result<V, N>> function) {
         return matchResult(Result::ok, function);
     }
 
@@ -87,7 +87,7 @@ public class Result<V, E> {
         return matchResult(mapper, error -> defaultValue);
     }
 
-    public <N extends Exception> Result<V, N> mapError(Function<E, N> mapper) {
+    public <N> Result<V, N> mapError(Function<E, N> mapper) {
         return matchResult(Result::ok, error -> error(mapper.apply(error)));
     }
 
