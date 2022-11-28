@@ -25,7 +25,7 @@ public class Result<V, E> {
 
     public void match(Consumer<V> okConsumer, Consumer<E> errorConsumer) {
         if (isOk()) okConsumer.accept(value);
-        errorConsumer.accept(error);
+        else errorConsumer.accept(error);
     }
 
     public <T> T matchResult(Function<V, T> okFunction, Function<E, T> errorFunction) {
@@ -89,6 +89,18 @@ public class Result<V, E> {
 
     public <N> Result<V, N> mapError(Function<E, N> mapper) {
         return matchResult(Result::ok, error -> error(mapper.apply(error)));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Result<?, ?> result = (Result<?, ?>) o;
+
+        if (caughtError != result.caughtError) return false;
+        if (caughtError) return error.equals(result.error);
+        else return value.equals(result.value);
     }
 
     public static <E> @NotNull Result<None, E> ok() {
