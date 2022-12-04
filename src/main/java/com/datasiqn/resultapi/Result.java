@@ -46,6 +46,10 @@ public class Result<V, E> {
         throw new UnwrapException("unwrap", "err");
     }
 
+    public V unwrapOr(V defaultValue) {
+        return matchResult(value -> this.value, error -> defaultValue);
+    }
+
     public E unwrapError() {
         if (isError()) return error;
         throw new UnwrapException("unwrapError", "ok");
@@ -73,10 +77,6 @@ public class Result<V, E> {
 
     public <N> Result<V, N> orElse(Function<E, Result<V, N>> function) {
         return matchResult(Result::ok, function);
-    }
-
-    public V unwrapOr(V defaultValue) {
-        return matchResult(value -> this.value, error -> defaultValue);
     }
 
     public <N> Result<N, E> map(Function<V, N> mapper) {
