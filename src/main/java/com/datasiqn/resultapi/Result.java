@@ -351,10 +351,10 @@ public class Result<V, E> {
      * @param <E> The type of the {@code Error} value
      */
     @Contract(value = "_, _ -> new", pure = true)
-    public static <V, E> Result<V, E> resolve(ValueSupplier<V> supplier, Function<Exception, E> errorMapper) {
+    public static <V, E> Result<V, E> resolve(ValueSupplier<V> supplier, Function<Throwable, E> errorMapper) {
         try {
             return ok(supplier.getValue());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return error(errorMapper.apply(e));
         }
     }
@@ -368,8 +368,8 @@ public class Result<V, E> {
         /**
          * Gets the value
          * @return The value
-         * @throws Exception If an exception occurs
+         * @throws Throwable If an exception occurs
          */
-        T getValue() throws Exception;
+        T getValue() throws Throwable;
     }
 }
