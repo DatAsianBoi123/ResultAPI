@@ -4,6 +4,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -84,7 +88,51 @@ public class Result<V, E> {
     }
 
     /**
-     * Returns the contained {@code Ok} value
+     * Returns the contained {@code Ok} value if this is {@code Ok}, otherwise throws an {@link ExpectException}
+     * <pre>
+     *     {@code
+     *
+     *     String string = Result.ok("hello").expect("Result should be ok");
+     *     // `string` is "hello"
+     *
+     *     int integer = Result.error("asdfasdf").expect("String should be valid integer");
+     *     // throws ExpectException: "String should be a valid integer: asdfasdf"
+     *
+     *     }
+     * </pre>
+     * @param message The error message to be displayed if this is {@code Error}
+     * @return The contained {@code Ok} value
+     * @throws ExpectException If this is {@code Error}, with the message `{@code message}: {@code Error}`
+     */
+    public V expect(String message) {
+        if (isError()) throw new ExpectException(message, error);
+        return value;
+    }
+
+    /**
+     * Returns the contained {@code Error} value if this is {@code Error}, otherwise throws an {@link ExpectException}
+     * <pre>
+     *     {@code
+     *
+     *     String string = Result.ok("hello").expectError("Result should be error");
+     *     // throws ExpectException: "Result should be error: hello"
+     *
+     *     String string = Result.error("asdfasdf").expectError("String should be invalid integer");
+     *     // `string` is "asdfasdf"
+     *
+     *     }
+     * </pre>
+     * @param message The error message to be displayed if this is {@code Ok}
+     * @return The contained {@code Error} value
+     * @throws ExpectException If this is {@code Ok}, with the message `{@code message}: {@code Ok}`
+     */
+    public E expectError(String message) {
+        if (isOk()) throw new ExpectException(message, value);
+        return error;
+    }
+
+    /**
+     * Returns the contained {@code Ok} value. In most cases you should check to make sure this is {@code Ok}.
      * @return The {@code Ok} value
      * @throws UnwrapException If this is {@code Error}
      */
@@ -103,7 +151,7 @@ public class Result<V, E> {
     }
 
     /**
-     * Returns the contained {@code Error} value
+     * Returns the contained {@code Error} value. In most cases you should check to make sure this is {@code Error}.
      * @return The {@code Error} value
      * @throws UnwrapException If this is {@code Ok}
      */
@@ -279,9 +327,32 @@ public class Result<V, E> {
         return matchResult(Result::ok, error -> error(mapper.apply(error)));
     }
 
+    /**
+     * Turns this into an {@code Optional}. If this is {@code Ok}, then this will return a new {@code Optional} containing the contained {@code Ok} value.
+     * If this is {@code Error}, then this will return an empty {@code Optional}.
+     * <pre>
+     *     {@code
+     *
+     *     Optional<String> optional = Result.ok("thing").toOptional();
+     *     // `optional` is Optional[thing]
+     *
+     *
+     *     Optional<String> optional = Result.error("uh oh").toOptional());
+     *     // `optional` is Optional.empty
+     *
+     *     }
+     * </pre>
+     * @return The newly constructed {@code Optional} instance
+     */
+    @Contract(pure = true)
+    public Optional<V> toOptional() {
+        if (isOk()) return Optional.of(value);
+        return Optional.empty();
+    }
+
     @Override
     public String toString() {
-        return "Result(" + (isOk() ? "Ok" : "Error") + ") " + (isOk() ? unwrap() : unwrapError());
+        return "Result(" + (isOk() ? "Ok" : "Error") + ") = " + (isOk() ? unwrap() : unwrapError());
     }
 
     @Override
@@ -297,7 +368,7 @@ public class Result<V, E> {
     }
 
     /**
-     * Creates a new {@code Result} with an {@code Ok} value of NONE
+     * Creates a new {@code Result} with an {@code Ok} value of {@code NONE}
      * @return The created {@code Result} instance
      * @param <E> The type of the {@code Error} value
      */
@@ -313,7 +384,7 @@ public class Result<V, E> {
      * @param <E> The type of the {@code Error} value
      */
     @Contract(value = "_ -> new", pure = true)
-    public static <V, E> @NotNull Result<V, E> ok(V value) {
+    public static <V, E> @NotNull Result<V, E> ok(@NotNull V value) {
         return new Result<>(value, null);
     }
 
@@ -325,7 +396,7 @@ public class Result<V, E> {
      * @param <E> The type of the {@code Error} value
      */
     @Contract(value = "_ -> new", pure = true)
-    public static <V, E> @NotNull Result<V, E> error(E error) {
+    public static <V, E> @NotNull Result<V, E> error(@NotNull E error) {
         return new Result<>(null, error);
     }
 
@@ -337,7 +408,7 @@ public class Result<V, E> {
      * @param <V> The type of the {@code Ok} value
      * @param <E> The type of the {@code Error} value
      */
-    public static <V, E> @NotNull Result<V, E> ofNullable(@Nullable V value, E error) {
+    public static <V, E> @NotNull Result<V, E> ofNullable(@Nullable V value, @NotNull E error) {
         if (value == null) return error(error);
         return ok(value);
     }
@@ -357,6 +428,51 @@ public class Result<V, E> {
         } catch (Throwable e) {
             return error(errorMapper.apply(e));
         }
+    }
+
+    /**
+     * Returns all {@code Ok} values in {@code results}
+     * <pre>
+     *     {@code
+     *
+     *     Collection<String> all = Result.all(Result.ok("hey"), Result.ok("there"), Result.error("bad result"), Result.ok("guys"));
+     *     // `all` is "hey", "there", "guys"
+     *
+     *     }
+     * </pre>
+     * @param results The results to loop through
+     * @return All {@code Ok} values in {@code results}
+     * @param <V> The {@code Ok} type
+     */
+    @SafeVarargs
+    public static <V> @NotNull Collection<V> all(Result<V, ?> @NotNull ... results) {
+        List<V> values = new ArrayList<>();
+        for (Result<V, ?> result : results) result.match(values::add, e -> {});
+        return values;
+    }
+
+    /**
+     * Returns all {@code Error} values in {@code results}
+     * <pre>
+     *     {@code
+     *
+     *     Collection<String> errors = Result.errors(Result.error("error"), Result.ok(10), Result.error("three"), Result.error("hello"));
+     *     // `errors` is "error", "three", "hello
+     *
+     *     }
+     * </pre>
+     * @param results The results to loop through
+     * @return All {@code Error} values in {@code results}
+     * @param <E> The {@code Error} type
+     */
+    @SafeVarargs
+    public static <E> @NotNull Collection<E> errors(Result<?, E> @NotNull ... results) {
+        List<E> errors = new ArrayList<>();
+        for (Result<?, E> result : results) {
+            if (result.isOk()) continue;
+            errors.add(result.unwrapError());
+        }
+        return errors;
     }
 
     /**
