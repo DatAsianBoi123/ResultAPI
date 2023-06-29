@@ -13,7 +13,7 @@ public class ResultTest {
     public void testOkErr() {
         assertTrue(Result.ok().isOk());
 
-        assertTrue(Result.error(0).isError());
+        assertTrue(Result.error().isError());
 
         assertFalse(Result.error(1).isOk());
 
@@ -26,6 +26,14 @@ public class ResultTest {
         assertTrue(Result.resolve(() -> Integer.parseInt("8"), exception -> 2).isOk());
 
         assertTrue(Result.resolve(() -> Double.parseDouble("hello"), exception -> 0).isError());
+
+        assertTrue(Result.fromOptional(Optional.of("hello")).isOk());
+
+        assertTrue(Result.fromOptional(Optional.empty()).isError());
+
+        assertTrue(Result.fromErrorOptional(Optional.of(12)).isError());
+
+        assertTrue(Result.fromErrorOptional(Optional.empty()).isOk());
     }
 
     @Test
@@ -198,5 +206,9 @@ public class ResultTest {
         assertEquals(Optional.of("thing"), Result.ok("thing").toOptional());
 
         assertEquals(Optional.empty(), Result.error("error").toOptional());
+
+        assertEquals(Optional.of("error"), Result.error("error").toErrorOptional());
+
+        assertEquals(Optional.empty(), Result.ok().toErrorOptional());
     }
 }
