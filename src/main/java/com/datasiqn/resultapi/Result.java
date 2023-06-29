@@ -350,6 +350,27 @@ public class Result<V, E> {
         return Optional.empty();
     }
 
+    /**
+     * Turns this into an {@code Optional}. If this is {@code Ok}, then this will return an empty {@code Optional}.
+     * If this is {@code Error}, then this will return a new {@code Optional} containing the contained {@code Error} value.
+     * <pre>
+     *     {@code
+     *
+     *     Optional<String> optional = Result.ok("ok").toErrorOptional();
+     *     // `optional` is Optional.empty
+     *
+     *     Optional<String> optional = Result.error("this is an error").toErrorOptional();
+     *     // `optional` is Optional[this is an error]
+     *
+     *     }
+     * </pre>
+     * @return The newly constructed {@code Optional} instance
+     */
+    public Optional<E> toErrorOptional() {
+        if (isError()) return Optional.of(error);
+        return Optional.empty();
+    }
+
     @Override
     public String toString() {
         return "Result(" + (isOk() ? "Ok" : "Error") + ") = " + (isOk() ? unwrap() : unwrapError());
@@ -368,7 +389,7 @@ public class Result<V, E> {
     }
 
     /**
-     * Creates a new {@code Result} with an {@code Ok} value of {@code NONE}
+     * Creates a new {@code Result} with an {@code Ok} value of {@code None}
      * @return The created {@code Result} instance
      * @param <E> The type of the {@code Error} value
      */
@@ -386,6 +407,15 @@ public class Result<V, E> {
     @Contract(value = "_ -> new", pure = true)
     public static <V, E> @NotNull Result<V, E> ok(@NotNull V value) {
         return new Result<>(value, null);
+    }
+
+    /**
+     * Creates a new {@code Result} with an {@code Error} value of {@code None}
+     * @return The created {@code Result} instance
+     * @param <V> The type of the {@code Ok} value
+     */
+    public static <V> @NotNull Result<V, None> error() {
+        return error(None.NONE);
     }
 
     /**
@@ -411,6 +441,30 @@ public class Result<V, E> {
     public static <V, E> @NotNull Result<V, E> ofNullable(@Nullable V value, @NotNull E error) {
         if (value == null) return error(error);
         return ok(value);
+    }
+
+    /**
+     * Creates a new {@code Result} with an {@code Ok} value containing the inner value of {@code optional} if {@code optional} contains a value,
+     * otherwise creates a new {@code Result} with an {@code Error} value of {@code None}
+     * @param optional The optional value
+     * @return The newly created {@code Result} instance
+     * @param <V> The type of the {@code Ok} value
+     */
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    public static <V> @NotNull Result<V, None> fromOptional(@NotNull Optional<V> optional) {
+        return optional.<Result<V, None>>map(Result::ok).orElse(Result.error());
+    }
+
+    /**
+     * Creates a new {@code Result} with an {@code Error} value containing the inner value of {@code optional} if {@code optional} contains a value,
+     * otherwise creates a new {@code Result} with an {@code Ok} value of {@code None}
+     * @param optional The optional value
+     * @return The newly created {@code Result} instance
+     * @param <E> The type of the {@code Error} value
+     */
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    public static <E> @NotNull Result<None, E> fromErrorOptional(@NotNull Optional<E> optional) {
+        return optional.<Result<None, E>>map(Result::error).orElse(Result.ok());
     }
 
     /**
