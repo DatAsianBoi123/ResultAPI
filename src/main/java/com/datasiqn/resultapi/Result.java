@@ -468,10 +468,10 @@ public class Result<V, E> {
     }
 
     /**
-     * Creates a new {@code Result} with the result of {@code supplier}. If {@code supplier} throws an exception, it creates a new {@code Result} with an {@code Error} value of the result of {@code errorMapper}
+     * Creates a new {@code Result} with an {@code Ok} value of {@code supplier}. If {@code supplier} throws an exception, it creates a new {@code Result} with an {@code Error} value of the result of {@code errorMapper}
      * @param supplier The supplier to resolve
      * @param errorMapper The function to map the exception that {@code supplier} may throw
-     * @return The created {@code Result} instance
+     * @return The newly created {@code Result} instance
      * @param <V> The type of the {@code Ok} value
      * @param <E> The type of the {@code Error} value
      */
@@ -481,6 +481,20 @@ public class Result<V, E> {
             return ok(supplier.getValue());
         } catch (Throwable e) {
             return error(errorMapper.apply(e));
+        }
+    }
+
+    /**
+     * Creates a new {@code Result} with an {@code Ok} value of {@code supplier}. If {@code supplier} throws an exception, it creates a new {@code Result} with an {@code Error} value of {@code None}
+     * @param supplier The supplier to resolve
+     * @return The newly created {@code Result} value
+     * @param <V> The type of the {@code Ok} value
+     */
+    public static <V> Result<V, None> resolve(ValueSupplier<V> supplier) {
+        try {
+            return ok(supplier.getValue());
+        } catch (Throwable e) {
+            return error();
         }
     }
 
