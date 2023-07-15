@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import static org.junit.Assert.*;
 
@@ -76,6 +77,17 @@ public class ResultTest {
         assertEquals(5, (int) Result.ok(5).unwrapOr(2));
 
         assertEquals(8, (int) Result.error(2).unwrapOr(8));
+    }
+
+    @Test
+    public void testUnwrapOrError() {
+        assertEquals(9, (long) Result.ok(9).unwrapOrThrow(new IllegalStateException("should be Ok")));
+
+        assertThrows(IllegalArgumentException.class, () -> Result.error("he").unwrapOrThrow(new IllegalArgumentException()));
+
+        assertEquals(9, (long) Result.ok(9).unwrapOrThrow((Function<Object, IllegalStateException>) err -> new IllegalStateException("should be Ok")));
+
+        assertThrows(IllegalArgumentException.class, () -> Result.error("he").unwrapOrThrow((Function<String, IllegalArgumentException>) IllegalArgumentException::new));
     }
 
     @Test

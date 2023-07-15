@@ -151,6 +151,29 @@ public class Result<V, E> {
     }
 
     /**
+     * Returns the contained {@code Ok} value, or throws {@code throwable} if this is {@code Error}
+     * @param throwable The throwable to throw if this is {@code Error}
+     * @return The contained {@code Ok} value
+     * @param <T> The type of the throwable
+     * @throws T If this is {@code Error}
+     */
+    public <T extends Throwable> V unwrapOrThrow(T throwable) throws T {
+        if (isOk()) return value;
+        throw throwable;
+    }
+    /**
+     * Returns the contained {@code Ok} value, or throws the result of {@code throwableFunction} if this is {@code Error}
+     * @param throwableFunction The function to call when this is {@code Error}
+     * @return The contained {@code Ok} value
+     * @param <T> The type of the throwable
+     * @throws T If this is {@code Error}
+     */
+    public <T extends Throwable> V unwrapOrThrow(Function<E, T> throwableFunction) throws T {
+        if (isOk()) return value;
+        throw throwableFunction.apply(error);
+    }
+
+    /**
      * Returns the contained {@code Error} value. In most cases you should check to make sure this is {@code Error}.
      * @return The {@code Error} value
      * @throws UnwrapException If this is {@code Ok}
