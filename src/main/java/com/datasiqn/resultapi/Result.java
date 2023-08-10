@@ -186,17 +186,21 @@ public class Result<V, E> {
     /**
      * Calls {@code consumer} if this is {@code Ok}
      * @param consumer The consumer to be called if this is {@code Ok}
+     * @return This {@code Result}, for chaining
      */
-    public void ifOk(Consumer<V> consumer) {
+    public Result<V, E> ifOk(Consumer<V> consumer) {
         match(consumer, error -> {});
+        return this;
     }
 
     /**
      * Calls {@code consumer} if this is {@code Error}
      * @param consumer The consumer to be called if this is {@code Error}
+     * @return This {@code Result}, for chaining
      */
-    public void ifError(Consumer<E> consumer) {
+    public Result<V, E> ifError(Consumer<E> consumer) {
         match(value -> {}, consumer);
+        return this;
     }
 
     /**
@@ -538,7 +542,7 @@ public class Result<V, E> {
     @SafeVarargs
     public static <V> @NotNull Collection<V> all(Result<V, ?> @NotNull ... results) {
         List<V> values = new ArrayList<>();
-        for (Result<V, ?> result : results) result.match(values::add, e -> {});
+        for (Result<V, ?> result : results) result.ifOk(values::add);
         return values;
     }
 
@@ -560,8 +564,7 @@ public class Result<V, E> {
     public static <E> @NotNull Collection<E> errors(Result<?, E> @NotNull ... results) {
         List<E> errors = new ArrayList<>();
         for (Result<?, E> result : results) {
-            if (result.isOk()) continue;
-            errors.add(result.unwrapError());
+            result.ifError(errors::add);
         }
         return errors;
     }
